@@ -313,11 +313,13 @@ func GetNftEvents(conn *pgxpool.Conn, q QueryEventsRequest, p PageRequest) (Quer
 					e.receiver, e.timestamp, e.tx_hash, e.events, e.price,
 					e.memo
 				FROM nft_event as e
-				JOIN nft_class as c
-				ON e.class_id = c.class_id
-				JOIN iscn AS i
-				ON i.iscn_id_prefix = c.parent_iscn_id_prefix
-				JOIN iscn_latest_version
+				LEFT JOIN nft_class as c
+				ON ($6 != '' OR ($12::text[] IS NOT NULL AND cardinality($12::text[]) > 0))
+					AND e.class_id = c.class_id
+				LEFT JOIN iscn AS i
+				ON ($12::text[] IS NOT NULL AND cardinality($12::text[]) > 0)
+					AND i.iscn_id_prefix = c.parent_iscn_id_prefix
+				LEFT JOIN iscn_latest_version
 				ON i.iscn_id_prefix = iscn_latest_version.iscn_id_prefix
 					AND i.version = iscn_latest_version.latest_version
 				WHERE ($4 = '' OR e.class_id = $4)
@@ -343,11 +345,18 @@ func GetNftEvents(conn *pgxpool.Conn, q QueryEventsRequest, p PageRequest) (Quer
 					e.receiver, e.timestamp, e.tx_hash, e.events, e.price,
 					e.memo
 				FROM nft_event as e
-				JOIN nft_class as c
-				ON e.class_id = c.class_id
-				JOIN iscn AS i
-				ON i.iscn_id_prefix = c.parent_iscn_id_prefix
-				JOIN iscn_latest_version
+				LEFT JOIN nft_class as c
+				ON (
+					$6 != ''
+					OR ($12::text[] IS NOT NULL AND cardinality($12::text[]) > 0)
+					OR ($13::text[] IS NOT NULL AND cardinality($13::text[]) > 0)
+				) AND e.class_id = c.class_id
+				LEFT JOIN iscn AS i
+				ON (
+					($12::text[] IS NOT NULL AND cardinality($12::text[]) > 0)
+					OR ($13::text[] IS NOT NULL AND cardinality($13::text[]) > 0)
+				) AND i.iscn_id_prefix = c.parent_iscn_id_prefix
+				LEFT JOIN iscn_latest_version
 				ON i.iscn_id_prefix = iscn_latest_version.iscn_id_prefix
 					AND i.version = iscn_latest_version.latest_version
 				WHERE ($4 = '' OR e.class_id = $4)
